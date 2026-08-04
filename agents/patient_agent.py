@@ -9,8 +9,7 @@ class PatientAgent:
         age,
         gender,
         disease,
-        doctor_name,
-        treatment
+        doctor_name
     ):
 
         connection = sqlite3.connect("database/clinical.db")
@@ -26,17 +25,15 @@ class PatientAgent:
                 gender,
                 disease,
                 doctor_name,
-                treatment,
                 prediction_date
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         """, (
             name,
             age,
             gender,
             disease,
             doctor_name,
-            treatment,
             prediction_date
         ))
 

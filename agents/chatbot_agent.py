@@ -7,7 +7,7 @@ import re
 
 load_dotenv()
 
-DEFAULT_MODEL = "gemini-1.5-flash"
+DEFAULT_MODEL = "gemini-flash-latest"
 MAX_RETRIES = 3
 
 
@@ -33,51 +33,52 @@ class ChatbotAgent:
         return None
 
     def reply(self, question):
-
+        
         prompt = f"""
-You are an AI Clinical Decision Support Assistant.
+    You are an AI Clinical Decision Support Assistant.
 
-Answer only medical and healthcare related questions.
+    Answer only medical and healthcare related questions.
 
-If the question is outside the medical domain,
-politely reply that you only answer medical questions.
+    If the question is outside the medical domain,
+    politely reply that you only answer medical questions.
 
-Question:
-{question}
-"""
+    Question:
+    {question}
+    """
 
         for attempt in range(1, MAX_RETRIES + 1):
+
             try:
+
                 response = self.client.models.generate_content(
                     model=self.model,
                     contents=prompt
                 )
+
                 return response.text
 
             except errors.ClientError as exc:
+
                 if exc.code == 429:
+
                     retry_delay = self._parse_retry_delay(str(exc))
 
                     if retry_delay is None:
                         retry_delay = min(10 * attempt, 60)
 
-                    if attempt < MAX_RETRIES:
-                        time.sleep(retry_delay)
-                    else:
-                        return (
-                            "I'm sorry, but the AI service is temporarily unavailable "
-                            "due to API quota limits. Please try again later. "
-                            "For urgent medical concerns, please consult a doctor immediately."
-                        )
+                        if attempt < MAX_RETRIES:
+                            time.sleep(retry_delay)
+
+                        else:
+                            return (
+                                "Gemini API quota exceeded. "
+                                "Please try again later."
+                            )
+
                 else:
-                    return (
-                        f"I'm sorry, an error occurred while processing your request. "
-                        f"Please try again later."
-                    )
+                    return f"Gemini Error (HTTP {exc.code}): {exc.message}"
 
-        # Fallback if all retries exhausted
-        return (
-            "I'm sorry, but the AI service is currently unavailable due to API quota limits. "
-            "Please try again later. For urgent medical concerns, please consult a doctor immediately."
-        )
+            except Exception as e:
+                return f"Unexpected Error: {str(e)}"
 
+        return "AI service is currently unavailable."

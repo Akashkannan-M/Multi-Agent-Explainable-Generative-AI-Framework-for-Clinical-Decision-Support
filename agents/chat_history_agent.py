@@ -39,3 +39,5 @@ class ChatHistoryAgent:
         conn.close()
 
         return df
+    
+

@@ -23,7 +23,12 @@ class ReportAgent:
 
         story = []
 
-        story.append(Paragraph("<b>Clinical Decision Support Report</b>", styles["Title"]))
+        story.append(
+            Paragraph(
+                "<b>Clinical Decision Support Report</b>",
+                styles["Title"]
+            )
+        )
 
         story.append(Paragraph(f"<b>Patient Name:</b> {name}", styles["BodyText"]))
         story.append(Paragraph(f"<b>Age:</b> {age}", styles["BodyText"]))
@@ -31,19 +36,15 @@ class ReportAgent:
 
         story.append(Paragraph("<br/>", styles["BodyText"]))
 
-        story.append(Paragraph(f"<b>Predicted Disease:</b> {disease}", styles["BodyText"]))
-
-        story.append(Paragraph(f"<b>Confidence Score:</b> {confidence}%", styles["BodyText"]))
-
-        story.append(Paragraph("<br/>", styles["BodyText"]))
-
-        story.append(Paragraph("<b>Recommendations</b>", styles["Heading2"]))
+        story.append(
+            Paragraph("<b>Recommendations</b>", styles["Heading2"])
+        )
 
         for item in recommendations:
             story.append(
                 Paragraph(f"• {item}", styles["BodyText"])
             )
-        
+
         story.append(Paragraph("<br/>", styles["BodyText"]))
 
         story.append(
@@ -56,7 +57,9 @@ class ReportAgent:
         story.append(
             Paragraph(image_result, styles["BodyText"])
         )
-        
+
         document.build(story)
 
         return file_name
+    
+   

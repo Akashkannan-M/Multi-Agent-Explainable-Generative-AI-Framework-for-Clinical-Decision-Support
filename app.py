@@ -1023,6 +1023,51 @@ if page == "💬 AI Medical Chatbot":
     st.stop()
 
 
+# ==================================================
+# AI CHATBOT (ADMIN / DOCTOR)
+# ==================================================
+
+if page == "AI Chatbot":
+
+
+    st.title(
+        "🤖 AI Health Assistant"
+    )
+
+
+    question = st.text_area(
+        "Ask your health related question"
+    )
+
+
+    if st.button("Ask AI"):
+
+
+        if question.strip():
+
+            response = chatbot_agent.reply(
+                question
+            )
+
+            st.success(response)
+
+
+            chat_history_agent.save_chat(
+                question,
+                response
+            )
+
+
+        else:
+
+            st.warning(
+                "Please enter your question"
+            )
+
+
+    st.stop()
+
+
 
 # ==================================================
 # BOOK APPOINTMENT
@@ -1131,6 +1176,8 @@ if page == "💊 My Prescriptions":
 # DISEASE PREDICTION
 # ==================================================
 
+    
+    
 st.title("🏥 Multi-Agent Clinical Decision Support System")
 
 st.write("Welcome to the AI-based Clinical Decision Support System.")
