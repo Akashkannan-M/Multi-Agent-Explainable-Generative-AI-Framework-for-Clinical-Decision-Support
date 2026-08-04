@@ -95,6 +95,9 @@ if not st.session_state.logged_in:
 # Sidebar
 # --------------------------------------------------
 
+
+
+
 if st.session_state.role == "Admin":
 
     page = st.sidebar.selectbox(
@@ -114,6 +117,22 @@ if st.session_state.role == "Admin":
             "Doctor Analytics"
         ]
     )
+
+elif st.session_state.role == "Patient":
+
+    page = st.sidebar.selectbox(
+        "Patient Menu",
+        [
+            "🏠 Home",
+            "👤 My Profile",
+            "📋 My Medical History",
+            "📄 My Reports",
+            "💬 AI Medical Chatbot",
+            "📅 Book Appointment",
+            "💊 My Prescriptions"
+        ]
+    )
+
 
 elif st.session_state.role == "Doctor":
 
@@ -158,72 +177,66 @@ if page == "Dashboard":
 
     data = dashboard_agent.get_dashboard()
 
-    st.title("📊 Clinical Dashboard")
+    left, right = st.columns([3, 1])
 
-    col1, col2, col3, col4 = st.columns(4)
+    with left:
 
-    col1.metric("👨‍⚕️ Patients", data["patients"])
-    col2.metric("🦠 Diseases", data["diseases"])
-    col3.metric("👨 Male", data["male"])
-    col4.metric("👩 Female", data["female"])
+        st.title("📊 Clinical Dashboard")
 
-    st.metric("🏥 Most Common Disease", data["common"])
+        col1, col2, col3, col4 = st.columns(4)
 
-    st.divider()
+        col1.metric("👨‍⚕️ Patients", data["patients"])
+        col2.metric("🦠 Diseases", data["diseases"])
+        col3.metric("👨 Male", data["male"])
+        col4.metric("👩 Female", data["female"])
 
-    # =====================================
-    # Hospital Analytics
-    # =====================================
+        st.metric("🏥 Most Common Disease", data["common"])
 
-    st.subheader("📊 Hospital Analytics")
+        st.divider()
 
-    total_patients = analytics_agent.total_patients()
-    today_patients = analytics_agent.today_patients()
-    monthly_revenue = analytics_agent.monthly_revenue()
+        st.subheader("📊 Hospital Analytics")
 
-    col1, col2, col3 = st.columns(3)
+        total_patients = analytics_agent.total_patients()
+        today_patients = analytics_agent.today_patients()
+        monthly_revenue = analytics_agent.monthly_revenue()
 
-    with col1:
-        st.metric("Total Patients", total_patients)
+        a1, a2, a3 = st.columns(3)
 
-    with col2:
-        st.metric("Today's Patients", today_patients)
+        with a1:
+            st.metric("Total Patients", total_patients)
 
-    with col3:
-        st.metric("Monthly Revenue", f"₹{monthly_revenue:.2f}")
+        with a2:
+            st.metric("Today's Patients", today_patients)
 
-    st.divider()
+        with a3:
+            st.metric("Monthly Revenue", f"₹{monthly_revenue:.2f}")
 
-    # =====================================
-    # Disease Statistics Chart
-    # =====================================
+    with right:
 
-    st.subheader("🦠 Disease Statistics")
+        st.subheader("🦠 Disease Statistics")
 
-    disease_df = analytics_agent.disease_statistics()
+        disease_df = analytics_agent.disease_statistics()
 
-    if not disease_df.empty:
+        if not disease_df.empty:
 
-        fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(3,3))
 
-        ax.bar(
-            disease_df["disease"],
-            disease_df["Total"]
-        )
+            ax.bar(
+                disease_df["disease"].astype(str),
+                disease_df["Total"].astype(int)
+            )
 
-        ax.set_xlabel("Disease")
-        ax.set_ylabel("Patients")
+            ax.set_xlabel("")
+            ax.set_ylabel("")
 
-        st.pyplot(fig)
+            plt.xticks(rotation=45, fontsize=8)
 
-    else:
-        st.info("No disease statistics available.")
+            st.pyplot(fig)
+
+        else:
+            st.info("No Data")
 
     st.divider()
-
-    
-
-   
 
     # =====================================
     # Filter Patients by Date
@@ -247,37 +260,6 @@ if page == "Dashboard":
         )
 
         st.dataframe(filtered, use_container_width=True)
-
-    st.stop()
-
-# ==================================================
-# REPORTS
-# ==================================================
-
-if page == "Reports":
-
-    st.title("📄 Prediction Reports")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        start_date = st.date_input("Start Date")
-
-    with col2:
-        end_date = st.date_input("End Date")
-
-    if st.button("Filter Reports"):
-
-        df = report_history_agent.filter_reports(
-            str(start_date),
-            str(end_date)
-        )
-
-    else:
-
-        df = report_history_agent.get_reports()
-
-    st.dataframe(df, use_container_width=True)
 
     st.stop()
     
@@ -415,7 +397,7 @@ if page == "User Management":
 
     role = st.selectbox(
         "Role",
-        ["Admin", "Doctor"]
+        ["Admin", "Doctor", "Patient"]
     )
 
     if st.button("Add User"):
@@ -450,32 +432,95 @@ if page == "User Management":
 
     st.stop()
 
+
 # ==================================================
-# AI CHATBOT
+# REPORTS
 # ==================================================
 
-if page == "AI Chatbot":
+if page == "Reports":
 
-    st.title("💬 AI Medical Chatbot")
+    st.title("📄 Clinical Prediction Reports")
+    st.write("View and download all patient prediction reports.")
 
-    question = st.text_input("Ask your medical question")
+    st.divider()
 
-    if st.button("Ask AI"):
+    # ----------------------------
+    # Filter
+    # ----------------------------
 
-        if question.strip():
+    col1, col2, col3 = st.columns(3)
 
-            answer = chatbot_agent.reply(question)
+    with col1:
+        start_date = st.date_input("📅 Start Date")
 
-            chat_history_agent.save_chat(question, answer)
+    with col2:
+        end_date = st.date_input("📅 End Date")
 
-            st.write(answer)
+    with col3:
+        search = st.text_input("🔍 Search Patient")
 
+    if st.button("Search Reports"):
+
+        df = report_history_agent.filter_reports(
+            str(start_date),
+            str(end_date)
+        )
+
+        if search.strip():
+            df = df[df["name"].str.contains(search, case=False)]
+
+    else:
+        df = report_history_agent.get_reports()
+
+    st.divider()
+
+    st.subheader("📋 Report List")
+
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.divider()
+
+    # ----------------------------
+    # Statistics
+    # ----------------------------
+
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        st.metric("Total Reports", len(df))
+
+    with c2:
+        if not df.empty:
+            st.metric("Diseases", df["disease"].nunique())
         else:
+            st.metric("Diseases", 0)
 
-            st.warning("Please enter a question.")
+    with c3:
+        if not df.empty:
+            st.metric("Latest Report", df.iloc[-1]["prediction_date"])
+        else:
+            st.metric("Latest Report", "-")
+
+    st.divider()
+
+    # ----------------------------
+    # Download CSV
+    # ----------------------------
+
+    csv = df.to_csv(index=False).encode("utf-8")
+
+    st.download_button(
+        label="📥 Download Reports (CSV)",
+        data=csv,
+        file_name="Clinical_Reports.csv",
+        mime="text/csv"
+    )
 
     st.stop()
-
 # ==================================================
 # CHAT HISTORY
 # ==================================================
@@ -754,21 +799,392 @@ if page == "Doctor Analytics":
     st.dataframe(treatment_df, use_container_width=True)
 
     st.stop()
+
+
+# ==================================================
+# PATIENT HOME
+# ==================================================
+
+if page == "🏠 Home":
+
+    st.title("🏥 Patient Dashboard")
+
+    st.success(
+        f"Welcome {st.session_state.username}"
+    )
+
+    # Report Count
+    reports = report_history_agent.patient_report_count(
+        st.session_state.username
+    )
+
+    # Appointment Count
+    appointments = appointment_agent.patient_appointment_count(
+        st.session_state.username
+    )
+
+    # Prescription Count
+    prescriptions = prescription_agent.patient_prescription_count(
+        st.session_state.username
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "📄 My Reports",
+        reports
+    )
+
+    col2.metric(
+        "📅 My Appointments",
+        appointments
+    )
+
+    col3.metric(
+        "💊 My Prescriptions",
+        prescriptions
+    )
+
+    st.divider()
+
+    st.info(
+        "View your medical history, reports, appointments and prescriptions from the sidebar."
+    )
+
+
+# ==================================================
+# MY PROFILE
+# ==================================================
+
+if page == "👤 My Profile":
+
+    st.title("👤 Patient Profile")
+
+    col1, col2 = st.columns(2)
+
+
+    with col1:
+
+        st.text_input(
+            "Patient Name",
+            value=st.session_state.username
+        )
+
+        st.number_input(
+            "Age",
+            value=25
+        )
+
+
+    with col2:
+
+        st.selectbox(
+            "Gender",
+            [
+                "Male",
+                "Female"
+            ]
+        )
+
+
+        st.text_input(
+            "Blood Group",
+            "O+"
+        )
+
+
+    st.text_input(
+        "Phone Number"
+    )
+
+    st.text_input(
+        "Email"
+    )
+
+
+    if st.button("Update Profile"):
+
+        st.success(
+            "Profile Updated Successfully"
+        )
+
+
+    st.stop()
+
+
+
+# ==================================================
+# MY MEDICAL HISTORY
+# ==================================================
+
+if page == "📋 My Medical History":
+
+    st.title("📋 Medical History")
+
+
+    df = history_agent.patient_history(
+        st.session_state.username
+    )
+
+
+    if not df.empty:
+
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No Medical Records Found"
+        )
+
+
+    st.stop()
+
+
+
+# ==================================================
+# MY REPORTS
+# ==================================================
+
+if page == "📄 My Reports":
+
+    st.title("📄 My Medical Reports")
+
+
+    reports = report_history_agent.get_reports(
+        st.session_state.username
+    )
+
+
+    if not reports.empty:
+
+        st.dataframe(
+            reports,
+            use_container_width=True
+        )
+
+
+    else:
+
+        st.info(
+            "No Reports Available"
+        )
+
+
+    st.stop()
+
+
+
+# ==================================================
+# AI MEDICAL CHATBOT
+# ==================================================
+
+if page == "💬 AI Medical Chatbot":
+
+
+    st.title(
+        "🤖 AI Health Assistant"
+    )
+
+
+    question = st.text_area(
+        "Ask your health related question"
+    )
+
+
+    if st.button("Ask AI"):
+
+
+        if question.strip():
+
+            response = chatbot_agent.reply(
+                question
+            )
+
+            st.success(response)
+
+
+            chat_history_agent.save_chat(
+                question,
+                response
+            )
+
+
+        else:
+
+            st.warning(
+                "Please enter your question"
+            )
+
+
+    st.stop()
+
+
+# ==================================================
+# AI CHATBOT (ADMIN / DOCTOR)
+# ==================================================
+
+if page == "AI Chatbot":
+
+
+    st.title(
+        "🤖 AI Health Assistant"
+    )
+
+
+    question = st.text_area(
+        "Ask your health related question"
+    )
+
+
+    if st.button("Ask AI"):
+
+
+        if question.strip():
+
+            response = chatbot_agent.reply(
+                question
+            )
+
+            st.success(response)
+
+
+            chat_history_agent.save_chat(
+                question,
+                response
+            )
+
+
+        else:
+
+            st.warning(
+                "Please enter your question"
+            )
+
+
+    st.stop()
+
+
+
+# ==================================================
+# BOOK APPOINTMENT
+# ==================================================
+
+if page == "📅 Book Appointment":
+
+
+    st.title(
+        "📅 Doctor Appointment"
+    )
+
+
+    doctor = st.selectbox(
+        "Select Doctor",
+        [
+            "Dr. John",
+            "Dr. Kumar",
+            "Dr. Priya"
+        ]
+    )
+
+
+    appointment_date = st.date_input(
+        "Appointment Date"
+    )
+
+
+    reason = st.text_area(
+        "Reason for Visit"
+    )
+
+
+    if st.button("Book Appointment"):
+
+
+        appointment_agent.book_appointment(
+            st.session_state.username,
+            doctor,
+            str(appointment_date),
+            reason
+        )
+
+
+        st.success(
+            "Appointment Booked Successfully"
+        )
+
+
+    st.divider()
+
+
+    st.subheader(
+        "My Appointments"
+    )
+
+
+    st.dataframe(
+        appointment_agent.get_appointments(
+            st.session_state.username
+        ),
+        use_container_width=True
+    )
+
+
+    st.stop()
+
+
+
+# ==================================================
+# MY PRESCRIPTIONS
+# ==================================================
+
+if page == "💊 My Prescriptions":
+
+
+    st.title(
+        "💊 My Prescriptions"
+    )
+
+
+    prescriptions = prescription_agent.get_prescriptions(
+        st.session_state.username
+    )
+
+
+    if not prescriptions.empty:
+
+
+        st.dataframe(
+            prescriptions,
+            use_container_width=True
+        )
+
+
+    else:
+
+        st.info(
+            "No Prescriptions Found"
+        )
+
+
+    st.stop()
      
 # ==================================================
 # DISEASE PREDICTION
 # ==================================================
 
+    
+    
 st.title("🏥 Multi-Agent Clinical Decision Support System")
 
 st.write("Welcome to the AI-based Clinical Decision Support System.")
 
 st.divider()
 
-treatment = st.text_area(
-    "💊 Treatment",
-    placeholder="e.g. Paracetamol 500mg, 1 tablet twice daily for 5 days"
-)
+
 # --------------------------------------------------
 # Patient Information
 # --------------------------------------------------
@@ -800,7 +1216,7 @@ doctor_name = st.selectbox(
 
 
 #----------------
-#IMAGE SYMPTOMS
+# IMAGE SYMPTOMS
 #----------------
 
 st.divider()
@@ -808,15 +1224,15 @@ st.divider()
 st.subheader("🖼 Upload Medical Image")
 
 uploaded_file = st.file_uploader(
-    "Upload Image",
+    "Upload Medical Image (Optional)",
     type=["jpg", "jpeg", "png"]
 )
 
-if uploaded_file:
-    st.image(uploaded_file, width=300)
-    result = image_agent.analyze_image(uploaded_file.name)
-    st.success(result)
-    
+image_result = "No Medical Image Uploaded"
+
+if uploaded_file is not None:
+    image_result = image_agent.analyze_image(uploaded_file.name)
+
 # --------------------------------------------------
 # Symptoms
 # --------------------------------------------------
@@ -841,6 +1257,13 @@ burning = st.checkbox("Burning")
 rash = st.checkbox("Rash")
 pain = st.checkbox("Pain")
 family_history = st.checkbox("Family History")
+
+st.subheader("Additional Symptoms")
+
+extra_symptoms = st.text_area(
+    "Enter Extra Symptoms (comma separated)",
+    placeholder="Example: nausea, dizziness, body pain"
+)
 
 # --------------------------------------------------
 # Predict
@@ -871,24 +1294,40 @@ if st.button("🔍 Predict Disease"):
         "Family_History": int(family_history)
     }
 
+    # Predict Disease (Internal)
     disease, confidence = prediction_agent.predict(patient)
 
+    # Save Patient
     patient_agent.save_patient(
         name,
         age,
         gender,
         disease,
-        doctor_name,
-        treatment
+        doctor_name
     )
 
-    st.success(f"Predicted Disease : {disease}")
-    st.info(f"Confidence Score : {confidence}%")
     st.success("Patient record saved successfully.")
 
-    if uploaded_file:
-        st.info(f"Image Analysis : {result}")
+    # Additional Symptoms
+    if extra_symptoms.strip():
 
+        st.subheader("Additional Symptoms")
+
+        symptom_list = [
+            symptom.strip()
+            for symptom in extra_symptoms.split(",")
+            if symptom.strip()
+        ]
+
+        for symptom in symptom_list:
+            st.write("✅", symptom)
+
+    # Image Analysis
+    if uploaded_file is not None:
+        st.subheader("🖼 Image Analysis")
+        st.info(image_result)
+
+    # Recommendations
     recommendations = recommendation_agent.get_recommendation(disease)
 
     st.subheader("📋 Recommendations")
@@ -896,6 +1335,7 @@ if st.button("🔍 Predict Disease"):
     for item in recommendations:
         st.write("✅", item)
 
+    # Explainable Reasons
     reasons = explanation_agent.explain(patient)
 
     st.subheader("🧠 Why was this disease predicted?")
@@ -903,6 +1343,7 @@ if st.button("🔍 Predict Disease"):
     for reason in reasons:
         st.write("🔹", reason)
 
+    # AI Explanation
     ai_response = genai_agent.generate_response(
         disease,
         confidence,
@@ -912,24 +1353,18 @@ if st.button("🔍 Predict Disease"):
     st.subheader("🤖 AI Clinical Explanation")
     st.write(ai_response)
 
-    st.divider()
-
-    st.subheader("📊 Explainable AI Dashboard")
-
-    fig = shap_agent.explain(patient)
-
-    st.pyplot(fig)
-
+    # PDF Report
     pdf_file = report_agent.generate_report(
         name,
         age,
         gender,
         disease,
         confidence,
-        recommendations
+        recommendations,
+        image_result
     )
 
-    st.success(f"PDF Report Generated : {pdf_file}")
+    st.success("PDF Report Generated Successfully")
 
     with open(pdf_file, "rb") as pdf:
 
