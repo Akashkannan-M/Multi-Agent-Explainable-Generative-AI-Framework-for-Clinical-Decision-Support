@@ -18,6 +18,29 @@ class HistoryAgent:
         return df
 
 
+    # Get patient's own history
+    def patient_history(self, username):
+
+        conn = sqlite3.connect("database/clinical.db")
+
+        query = """
+        SELECT *
+        FROM patients
+        WHERE name = ?
+        ORDER BY prediction_date DESC
+        """
+
+        df = pd.read_sql_query(
+            query,
+            conn,
+            params=(username,)
+        )
+
+        conn.close()
+
+        return df
+
+
     # Search patient
     def search_patient(self, keyword):
 
