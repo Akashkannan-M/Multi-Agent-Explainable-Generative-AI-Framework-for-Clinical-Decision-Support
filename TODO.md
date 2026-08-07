@@ -1,13 +1,25 @@
-# Patient Module Data Isolation - TODO
+# TODO - Fix Dashboard Errors
 
-## Steps
-- [x] 1. Modify `agents/appointment_agent.py` - add optional username filter to `get_appointments`
-- [x] 2. Modify `agents/prescription_agent.py` - add optional username filter to `get_prescriptions`
-- [x] 3. Modify `agents/report_history_agent.py` - add optional username filter to `get_reports`
-- [x] 4. Modify `agents/history_agent.py` - add `patient_history` method
-- [x] 5. Wire patient pages in `app.py` to use filtered queries
-- [x] 6. Fix unindented `appointment_date` line in Book Appointment block
-- [x] 7. Add missing Admin/Doctor "AI Chatbot" page handler in `app.py`
-- [x] 8. Syntax check all edited files
-</content>
+## Confirmed Errors Across Dashboards
+
+### 1. User Management Dashboard — "Delete User" broken
+- **File:** `agents/user_agent.py`
+- **Issue:** `delete_user()` uses `DELETE FROM users WHERE id=?` but column is `user_id`
+- **Error:** `sqlite3.OperationalError: no such column: id`
+- **Fix:** Change `WHERE id=?` → `WHERE user_id=?`
+
+### 2. Reports Dashboard — "Search Reports" broken
+- **File:** `agents/report_history_agent.py`
+- **Issue:** Method `filter_reports()` missing (called by `app.py` Reports page)
+- **Error:** `AttributeError: 'ReportHistoryAgent' object has no attribute 'filter_reports'`
+- **Fix:** Add `filter_reports(start_date, end_date)` method
+
+## Progress
+
+- [x] Analyze all dashboard agents and app.py
+- [x] Run verification script to confirm errors
+- [x] Fix `user_agent.py` delete_user column
+- [x] Add `filter_reports()` to report_history_agent.py
+- [x] Re-run verification script to confirm all dashboards work
+- [x] Clean up temp verification files
 

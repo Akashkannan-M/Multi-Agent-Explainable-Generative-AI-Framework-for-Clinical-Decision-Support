@@ -38,7 +38,7 @@ class UserAgent:
         return df
 
     def add_user(self, username, password, role):
-        
+
         conn = sqlite3.connect("database/clinical.db")
         cursor = conn.cursor()
 
@@ -59,7 +59,7 @@ class UserAgent:
         cursor = conn.cursor()
 
         cursor.execute(
-            "DELETE FROM users WHERE id=?",
+            "DELETE FROM users WHERE user_id=?",
             (user_id,)
         )
 
