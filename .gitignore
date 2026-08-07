@@ -1,0 +1,32 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Generated reports / exports
+*.pdf
+*.xlsx
+*.csv
+
+# Local database files (recreated on startup)
+database/*.db
+database/*.db-journal
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary diagnostic files
+_diag.py
+_verify_*.py
+_diag_*.py

@@ -7,23 +7,41 @@ import re
 
 load_dotenv()
 
-DEFAULT_MODEL = "gemini-flash-latest"
+DEFAULT_MODEL = "gemini-2.0-flash"
 MAX_RETRIES = 3
+
+
+def _resolve_api_key():
+    """Return the Gemini API key from the environment or Streamlit secrets."""
+    key = os.getenv("GEMINI_API_KEY")
+    if key:
+        return key
+    try:
+        import streamlit as st
+        return st.secrets.get("GEMINI_API_KEY")
+    except Exception:
+        return None
 
 
 class ChatbotAgent:
 
     def __init__(self, model=None):
-
-        api_key = os.getenv("GEMINI_API_KEY")
-
-        if not api_key:
-            raise RuntimeError(
-                "GEMINI_API_KEY is not set. Add it to the .env file before using Gemini."
-            )
-
+        # Defer API key validation until it is actually used so that the
+        # app can still start (login, dashboards, etc.) even if the Gemini
+        # API key is not present in the environment.
         self.model = model or os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
-        self.client = genai.Client(api_key=api_key)
+        self.api_key = _resolve_api_key()
+        self.client = None
+
+    def _get_client(self):
+        if self.client is None:
+            if not self.api_key:
+                raise RuntimeError(
+                    "GEMINI_API_KEY is not set. Configure it as a Streamlit "
+                    "secret or environment variable to use the AI feature."
+                )
+            self.client = genai.Client(api_key=self.api_key)
+        return self.client
 
     def _parse_retry_delay(self, error_message):
         """Extract retry delay in seconds from the error message."""
@@ -33,7 +51,7 @@ class ChatbotAgent:
         return None
 
     def reply(self, question):
-        
+
         prompt = f"""
     You are an AI Clinical Decision Support Assistant.
 
@@ -49,13 +67,17 @@ class ChatbotAgent:
         for attempt in range(1, MAX_RETRIES + 1):
 
             try:
+                client = self._get_client()
 
-                response = self.client.models.generate_content(
+                response = client.models.generate_content(
                     model=self.model,
                     contents=prompt
                 )
 
                 return response.text
+
+            except RuntimeError as e:
+                return str(e)
 
             except errors.ClientError as exc:
 

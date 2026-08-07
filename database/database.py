@@ -1,119 +1,180 @@
 import sqlite3
+import os
 
-# Connect to Database
-connection = sqlite3.connect("database/clinical.db")
-
-# Create Cursor
-cursor = connection.cursor()
+DB_PATH = os.path.join("database", "clinical.db")
 
 
+def _connect():
+    # Ensure the database directory exists
+    os.makedirs("database", exist_ok=True)
+    return sqlite3.connect(DB_PATH)
 
 
-print("doctor_name column checked.")
+def init_database():
+    """Create all tables and default seed data if they do not exist.
+    Idempotent - safe to call on every app startup.
+    """
+    conn = _connect()
+    cursor = conn.cursor()
 
-# Create Patient Table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS patients(
+    # ------------------------------------------------------------
+    # Patients
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS patients(
+        patient_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        age INTEGER,
+        gender TEXT,
+        disease TEXT,
+        prediction_date TEXT,
+        doctor_name TEXT,
+        treatment TEXT
+    )
+    """)
 
-    patient_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    # Add treatment column if missing (older DBs)
+    try:
+        cursor.execute("ALTER TABLE patients ADD COLUMN treatment TEXT")
+    except Exception:
+        pass
 
-    name TEXT,
+    # ------------------------------------------------------------
+    # Users
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        role TEXT
+    )
+    """)
 
-    age INTEGER,
+    # ------------------------------------------------------------
+    # Chat History
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chat_history (
+        chat_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question TEXT,
+        answer TEXT,
+        chat_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
-    gender TEXT,
+    # ------------------------------------------------------------
+    # Appointments
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS appointments(
+        appointment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_name TEXT,
+        doctor_name TEXT,
+        appointment_date TEXT,
+        appointment_time TEXT,
+        status TEXT
+    )
+    """)
 
-    disease TEXT,
+    # ------------------------------------------------------------
+    # Prescriptions
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS prescriptions(
+        prescription_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_name TEXT,
+        doctor_name TEXT,
+        diagnosis TEXT,
+        medicines TEXT,
+        dosage TEXT,
+        advice TEXT,
+        prescription_date TEXT
+    )
+    """)
 
-    prediction_date TEXT,
-    
-    doctor_name TEXT
+    # ------------------------------------------------------------
+    # Medicines
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS medicines(
+        medicine_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        medicine_name TEXT,
+        quantity INTEGER,
+        expiry_date TEXT,
+        manufacturer TEXT
+    )
+    """)
 
-)
-""")
+    # ------------------------------------------------------------
+    # Doctors
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS doctors(
+        doctor_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        doctor_name TEXT,
+        specialization TEXT,
+        experience TEXT,
+        phone TEXT
+    )
+    """)
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS chat_history (
-    chat_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    question TEXT,
-    answer TEXT,
-    chat_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
-""")
+    # ------------------------------------------------------------
+    # Billing (used by Analytics & Admin Dashboard)
+    # ------------------------------------------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS billing(
+        bill_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_name TEXT,
+        consultation_fee REAL,
+        medicine_charge REAL,
+        lab_charge REAL,
+        total_amount REAL,
+        bill_date TEXT
+    )
+    """)
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS appointments(
+    conn.commit()
 
-    appointment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    # ------------------------------------------------------------
+    # Seed default users (admin, doctor)
+    # ------------------------------------------------------------
+    default_users = [
+        ("admin", "admin123", "Admin"),
+        ("doctor", "doctor123", "Doctor"),
+        ("patient", "patient123", "Patient"),
+    ]
+    for u in default_users:
+        try:
+            cursor.execute(
+                "INSERT INTO users(username, password, role) VALUES(?,?,?)",
+                u,
+            )
+        except Exception:
+            pass
 
-    patient_name TEXT,
+    # ------------------------------------------------------------
+    # Seed default doctors
+    # ------------------------------------------------------------
+    default_doctors = [
+        ("Dr. John", "General Physician", "10", "9876543210"),
+        ("Dr. Kumar", "Cardiologist", "12", "9876543211"),
+        ("Dr. Priya", "Dermatologist", "8", "9876543212"),
+    ]
+    for doc in default_doctors:
+        try:
+            cursor.execute(
+                "INSERT INTO doctors(doctor_name, specialization, experience, phone) "
+                "VALUES(?,?,?,?)",
+                doc,
+            )
+        except Exception:
+            pass
 
-    doctor_name TEXT,
-
-    appointment_date TEXT,
-
-    appointment_time TEXT,
-
-    status TEXT
-)
-""")
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS prescriptions(
-
-    prescription_id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    patient_name TEXT,
-
-    doctor_name TEXT,
-
-    diagnosis TEXT,
-
-    medicines TEXT,
-
-    dosage TEXT,
-
-    advice TEXT,
-
-    prescription_date TEXT
-)
-""")
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS medicines(
-
-    medicine_id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    medicine_name TEXT,
-
-    quantity INTEGER,
-
-    expiry_date TEXT,
-
-    manufacturer TEXT
-)
-""")
+    conn.commit()
+    conn.close()
 
 
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS doctors(
-
-    doctor_id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    doctor_name TEXT,
-
-    specialization TEXT
-)
-""")
-
-try:
-    cursor.execute("ALTER TABLE patients ADD COLUMN doctor_name TEXT")
-except:
-    pass
-
-connection.commit()
-
-connection.close()
-
-print("Database Created Successfully")
+if __name__ == "__main__":
+    init_database()
+    print("Database initialized successfully.")

@@ -35,8 +35,7 @@ class ReportHistoryAgent:
         query = """
         SELECT *
         FROM patients
-        WHERE DATE(prediction_date)
-        BETWEEN ? AND ?
+        WHERE DATE(prediction_date) BETWEEN ? AND ?
         ORDER BY prediction_date DESC
         """
 

@@ -2,6 +2,12 @@ import os
 import streamlit as st
 import matplotlib.pyplot as plt
 
+# Initialize the SQLite database (idempotent - safe on every startup,
+# including on Streamlit Cloud's ephemeral filesystem).
+from database.database import init_database
+
+init_database()
+
 from agents.prediction_agent import PredictionAgent
 from agents.patient_agent import PatientAgent
 from agents.recommendation_agent import RecommendationAgent
@@ -1344,11 +1350,14 @@ if st.button("🔍 Predict Disease"):
         st.write("🔹", reason)
 
     # AI Explanation
-    ai_response = genai_agent.generate_response(
-        disease,
-        confidence,
-        recommendations
-    )
+    try:
+        ai_response = genai_agent.generate_response(
+            disease,
+            confidence,
+            recommendations
+        )
+    except Exception as ai_err:
+        ai_response = f"AI explanation is currently unavailable. Reason: {ai_err}"
 
     st.subheader("🤖 AI Clinical Explanation")
     st.write(ai_response)
