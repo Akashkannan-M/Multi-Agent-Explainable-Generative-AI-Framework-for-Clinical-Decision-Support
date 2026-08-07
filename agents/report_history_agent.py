@@ -28,6 +28,28 @@ class ReportHistoryAgent:
 
         return df
 
+    def filter_reports(self, start_date, end_date):
+
+        conn = sqlite3.connect("database/clinical.db")
+
+        query = """
+        SELECT *
+        FROM patients
+        WHERE DATE(prediction_date)
+        BETWEEN ? AND ?
+        ORDER BY prediction_date DESC
+        """
+
+        df = pd.read_sql_query(
+            query,
+            conn,
+            params=(start_date, end_date)
+        )
+
+        conn.close()
+
+        return df
+
     def patient_reports(self, patient_name):
 
         conn = sqlite3.connect("database/clinical.db")
@@ -68,7 +90,7 @@ class ReportHistoryAgent:
         conn.close()
 
         return count
-    
+
     def patient_history(self, patient_name):
 
         conn = sqlite3.connect("database/clinical.db")
