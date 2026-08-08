@@ -30,3 +30,7 @@ Thumbs.db
 _diag.py
 _verify_*.py
 _diag_*.py
+_gemini_*.py
+_compile_check.py
+_git_*.py
+_run_*.py

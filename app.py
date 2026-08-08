@@ -41,7 +41,10 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# Hide Streamlit-branded chrome (footer, menu, deploy)
+# Hide Streamlit-branded chrome (footer, menu) while
+# KEEPING the theme (Light/Dark) toggle available.
+# The toolbar is left visible so the theme picker works;
+# Fork/GitHub items are removed via toolbarMode=minimal.
 # --------------------------------------------------
 st.markdown(
     """
@@ -49,12 +52,12 @@ st.markdown(
         /* Hide the "Hosted with Streamlit" / footer area */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        /* Hide the deploy button branded with Streamlit */
-        [data-testid="stToolbar"] {visibility: hidden;}
-        [data-testid="stDecoration"] {visibility: hidden;}
-        [data-testid="stStatusWidget"] {visibility: hidden;}
-        /* Hide the "GitHub repository" link in the header if present */
-        header[data-testid="stHeader"] a {display: none;}
+        header[data-testid="stHeader"] {background: transparent;}
+        /* Reduce the toolbar to only the theme toggle by hiding
+           the Fork / GitHub / Share buttons but NOT the whole bar. */
+        [data-testid="stToolbar"] button[kind="headerNoPadding"]:not([aria-label="Close"]) {
+            display: none;
+        }
     </style>
     """,
     unsafe_allow_html=True
