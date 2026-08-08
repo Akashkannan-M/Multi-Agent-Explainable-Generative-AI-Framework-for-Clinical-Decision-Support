@@ -120,6 +120,79 @@ if not st.session_state.logged_in:
 # Sidebar
 # --------------------------------------------------
 
+# --------------------------------------------------
+# Theme Toggle (Light / Dark) - reliable across versions
+# --------------------------------------------------
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light"
+
+theme = st.sidebar.radio(
+    "🌗 Theme",
+    ["Light", "Dark"],
+    index=0 if st.session_state.theme == "Light" else 1,
+    key="theme_radio",
+    horizontal=True,
+)
+
+st.session_state.theme = theme
+
+# Apply theme via CSS variables. Only colors are overridden; no Streamlit
+# controls are hidden or restyled, so all existing functionality is preserved.
+if theme == "Dark":
+    st.markdown(
+        """
+        <style>
+        :root {
+            --background-color: #0e1117;
+            --secondary-background-color: #262730;
+            --text-color: #fafafa;
+            --primary-color: #1976d2;
+        }
+        html, body, [data-testid="stAppViewContainer"] {
+            background-color: #0e1117;
+            color: #fafafa;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #0e1117;
+        }
+        [data-testid="stHeader"] {
+            background-color: transparent;
+        }
+        .stApp {
+            background-color: #0e1117;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        """
+        <style>
+        :root {
+            --background-color: #ffffff;
+            --secondary-background-color: #f0f2f6;
+            --text-color: #31333f;
+            --primary-color: #1976d2;
+        }
+        html, body, [data-testid="stAppViewContainer"] {
+            background-color: #ffffff;
+            color: #31333f;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #f0f2f6;
+        }
+        [data-testid="stHeader"] {
+            background-color: transparent;
+        }
+        .stApp {
+            background-color: #ffffff;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 
 
