@@ -37,14 +37,15 @@ from agents.doctor_analytics_agent import DoctorAnalyticsAgent
 st.set_page_config(
     page_title="Clinical Decision Support",
     page_icon="🏥",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # --------------------------------------------------
 # Hide Streamlit-branded chrome (footer, menu) while
 # KEEPING the theme (Light/Dark) toggle available.
-# The toolbar is left visible so the theme picker works;
-# Fork/GitHub items are removed via toolbarMode=minimal.
+# Fork/GitHub/Share items are removed via toolbarMode=minimal
+# in .streamlit/config.toml, so no toolbar CSS is needed here.
 # --------------------------------------------------
 st.markdown(
     """
@@ -53,11 +54,6 @@ st.markdown(
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header[data-testid="stHeader"] {background: transparent;}
-        /* Reduce the toolbar to only the theme toggle by hiding
-           the Fork / GitHub / Share buttons but NOT the whole bar. */
-        [data-testid="stToolbar"] button[kind="headerNoPadding"]:not([aria-label="Close"]) {
-            display: none;
-        }
     </style>
     """,
     unsafe_allow_html=True
