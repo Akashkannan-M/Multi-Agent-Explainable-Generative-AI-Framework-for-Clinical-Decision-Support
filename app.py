@@ -41,6 +41,26 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
+# Hide Streamlit-branded chrome (footer, menu, deploy)
+# --------------------------------------------------
+st.markdown(
+    """
+    <style>
+        /* Hide the "Hosted with Streamlit" / footer area */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        /* Hide the deploy button branded with Streamlit */
+        [data-testid="stToolbar"] {visibility: hidden;}
+        [data-testid="stDecoration"] {visibility: hidden;}
+        [data-testid="stStatusWidget"] {visibility: hidden;}
+        /* Hide the "GitHub repository" link in the header if present */
+        header[data-testid="stHeader"] a {display: none;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# --------------------------------------------------
 # Initialize Agents
 # --------------------------------------------------
 

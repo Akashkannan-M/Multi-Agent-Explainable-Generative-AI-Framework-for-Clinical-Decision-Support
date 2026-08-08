@@ -9,13 +9,23 @@ DEFAULT_MODEL = "gemini-2.0-flash"
 
 
 def _resolve_api_key():
-    """Return the Gemini API key from the environment or Streamlit secrets."""
+    """Return the Gemini API key from the environment, .env, or Streamlit secrets."""
     key = os.getenv("GEMINI_API_KEY")
     if key:
-        return key
+        return key.strip()
+    # Try .env file (in case load_dotenv was not picked up)
+    try:
+        from dotenv import dotenv_values
+        env_vals = dotenv_values(".env")
+        key = env_vals.get("GEMINI_API_KEY")
+        if key:
+            return key.strip()
+    except Exception:
+        pass
     try:
         import streamlit as st
-        return st.secrets.get("GEMINI_API_KEY")
+        key = st.secrets.get("GEMINI_API_KEY")
+        return key.strip() if key else None
     except Exception:
         return None
 

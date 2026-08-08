@@ -6,6 +6,11 @@ address = "0.0.0.0"
 [browser]
 gatherUsageStats = false
 
+[client]
+# Removes the "Fork", "GitHub" and other Streamlit Cloud toolbar items
+# while keeping the theme (Light/Dark) toggle available.
+toolbarMode = "minimal"
+
 [theme]
 primaryColor = "#1976d2"
 backgroundColor = "#fafafa"

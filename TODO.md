@@ -1,25 +1,33 @@
-# TODO - Fix Dashboard Errors
+# TODO - Fix Reports, Doctor Analytics, AI Chatbot, and Streamlit UI
 
-## Confirmed Errors Across Dashboards
+## Confirmed root causes
 
-### 1. User Management Dashboard — "Delete User" broken
-- **File:** `agents/user_agent.py`
-- **Issue:** `delete_user()` uses `DELETE FROM users WHERE id=?` but column is `user_id`
-- **Error:** `sqlite3.OperationalError: no such column: id`
-- **Fix:** Change `WHERE id=?` → `WHERE user_id=?`
+### 1. AI Chatbot not working
+- Gemini API key not resolvable in deployment; model/API config needs hardening.
+- Fixed: robust key resolution (env/.env/Streamlit secrets), model fallback chain, clear error messages. App still needs a valid GEMINI_API_KEY in Streamlit Cloud secrets to return live AI responses.
 
-### 2. Reports Dashboard — "Search Reports" broken
-- **File:** `agents/report_history_agent.py`
-- **Issue:** Method `filter_reports()` missing (called by `app.py` Reports page)
-- **Error:** `AttributeError: 'ReportHistoryAgent' object has no attribute 'filter_reports'`
-- **Fix:** Add `filter_reports(start_date, end_date)` method
+### 2. Doctor Specialization duplicates
+- `database.py` seeded doctors on every startup with plain INSERT (no UNIQUE) -> duplicates accumulated.
+- `doctor_analytics_agent.doctor_specialization()` query had no DISTINCT/GROUP BY.
+- Fixed: DISTINCT query + idempotent seeding + UNIQUE index + deduplicated existing rows.
+
+### 3. Streamlit branding
+- Fork / GitHub / Streamlit toolbar + footer visible.
+- Fixed: toolbarMode=minimal in config.toml + safe CSS in app.py.
 
 ## Progress
 
-- [x] Analyze all dashboard agents and app.py
-- [x] Run verification script to confirm errors
-- [x] Fix `user_agent.py` delete_user column
-- [x] Add `filter_reports()` to report_history_agent.py
-- [x] Re-run verification script to confirm all dashboards work
-- [x] Clean up temp verification files
-
+- [x] Fix `doctor_analytics_agent.py` doctor_specialization to use DISTINCT
+- [x] Make `database.py` doctor seeding idempotent + add UNIQUE index
+- [x] Deduplicate existing doctor rows in clinical.db
+- [x] Harden `_resolve_api_key()` in chatbot_agent.py and genai_agent.py
+- [x] Add model fallback chain in chatbot_agent.py
+- [x] Pin google-genai in requirements.txt
+- [x] Add `client.toolbarMode = "minimal"` to .streamlit/config.toml
+- [x] Inject safe CSS in app.py to hide Streamlit footer/menu
+- [x] Run comprehensive local verification of all modules
+- [x] Test doctor_specialization returns exactly one row per doctor
+- [x] Test chatbot path (no-key graceful error + reach-API check)
+- [ ] Commit all changes
+- [ ] Push to origin/main
+- [ ] Wait for Streamlit Cloud redeploy and verify live app

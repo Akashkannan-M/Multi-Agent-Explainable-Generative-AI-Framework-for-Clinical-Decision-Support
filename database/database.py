@@ -154,22 +154,45 @@ def init_database():
             pass
 
     # ------------------------------------------------------------
-    # Seed default doctors
+    # Prevent duplicate doctors going forward.
+    # 1. Deduplicate any rows that already exist in the doctors table.
+    # 2. Add a UNIQUE index so future inserts cannot create duplicates.
+    # 3. Seed default doctors only if they are NOT already present.
     # ------------------------------------------------------------
+    cursor.execute("""
+        DELETE FROM doctors
+        WHERE doctor_id NOT IN (
+            SELECT MIN(doctor_id)
+            FROM doctors
+            GROUP BY doctor_name, specialization
+        )
+    """)
+    cursor.execute("DELETE FROM doctors WHERE doctor_name IS NULL OR doctor_name = ''")
+    cursor.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_doctors_name_spec "
+        "ON doctors(doctor_name, specialization)"
+    )
+
     default_doctors = [
         ("Dr. John", "General Physician", "10", "9876543210"),
         ("Dr. Kumar", "Cardiologist", "12", "9876543211"),
         ("Dr. Priya", "Dermatologist", "8", "9876543212"),
     ]
     for doc in default_doctors:
-        try:
-            cursor.execute(
-                "INSERT INTO doctors(doctor_name, specialization, experience, phone) "
-                "VALUES(?,?,?,?)",
-                doc,
-            )
-        except Exception:
-            pass
+        cursor.execute(
+            "SELECT COUNT(*) FROM doctors WHERE doctor_name=? AND specialization=?",
+            (doc[0], doc[1]),
+        )
+        exists = cursor.fetchone()[0]
+        if exists == 0:
+            try:
+                cursor.execute(
+                    "INSERT INTO doctors(doctor_name, specialization, experience, phone) "
+                    "VALUES(?,?,?,?)",
+                    doc,
+                )
+            except Exception:
+                pass
 
     conn.commit()
     conn.close()

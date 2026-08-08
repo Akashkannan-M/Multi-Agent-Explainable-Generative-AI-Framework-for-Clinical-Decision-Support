@@ -27,10 +27,11 @@ class DoctorAnalyticsAgent:
         conn = sqlite3.connect("database/clinical.db")
 
         df = pd.read_sql_query("""
-            SELECT
+            SELECT DISTINCT
                 doctor_name,
                 specialization
             FROM doctors
+            ORDER BY doctor_name
         """, conn)
 
         conn.close()

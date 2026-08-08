@@ -12,13 +12,23 @@ MAX_RETRIES = 3
 
 
 def _resolve_api_key():
-    """Return the Gemini API key from the environment or Streamlit secrets."""
+    """Return the Gemini API key from the environment, .env, or Streamlit secrets."""
     key = os.getenv("GEMINI_API_KEY")
     if key:
-        return key
+        return key.strip()
+    # Try .env file (in case load_dotenv was not picked up)
+    try:
+        from dotenv import dotenv_values
+        env_vals = dotenv_values(".env")
+        key = env_vals.get("GEMINI_API_KEY")
+        if key:
+            return key.strip()
+    except Exception:
+        pass
     try:
         import streamlit as st
-        return st.secrets.get("GEMINI_API_KEY")
+        key = st.secrets.get("GEMINI_API_KEY")
+        return key.strip() if key else None
     except Exception:
         return None
 
@@ -81,6 +91,12 @@ class ChatbotAgent:
 
             except errors.ClientError as exc:
 
+                # Model not enabled for this API key -> try a fallback model.
+                if exc.code in (400, 404, 403) and "model" in str(exc).lower():
+                    fallback = self._try_fallback(prompt)
+                    if fallback is not None:
+                        return fallback
+
                 if exc.code == 429:
 
                     retry_delay = self._parse_retry_delay(str(exc))
@@ -104,3 +120,25 @@ class ChatbotAgent:
                 return f"Unexpected Error: {str(e)}"
 
         return "AI service is currently unavailable."
+
+    def _try_fallback(self, prompt):
+        """Try alternative Gemini models that are commonly enabled by default."""
+        candidates = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"]
+        tried = {self.model}
+        for model in candidates:
+            if model in tried:
+                continue
+            tried.add(model)
+            try:
+                client = self._get_client()
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt
+                )
+                if response and response.text:
+                    self.model = model
+                    return response.text
+            except Exception:
+                continue
+        return None
+
