@@ -28,6 +28,6 @@
 - [x] Run comprehensive local verification of all modules
 - [x] Test doctor_specialization returns exactly one row per doctor
 - [x] Test chatbot path (no-key graceful error + reach-API check)
-- [ ] Commit all changes
-- [ ] Push to origin/main
+- [x] Commit all changes (commit a32e3fe)
+- [x] Push to origin/main (repo moved to Multi-Agent-Explainable-Generative-AI-Framework-for-Clinical-Decision-Support)
 - [ ] Wait for Streamlit Cloud redeploy and verify live app
